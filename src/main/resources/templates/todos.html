@@ -16,7 +16,7 @@
                 .then(data => {
                     const todoList = document.getElementById('todoList');
                     todoList.innerHTML = ''; // 기존 목록 초기화
-                    data.forEach(todo => {
+                    data.todos.forEach(todo => {
                         const li = document.createElement('li');
                         li.innerHTML = `<strong>${todo.name}</strong> - ${todo.description}`;
                         todoList.appendChild(li);

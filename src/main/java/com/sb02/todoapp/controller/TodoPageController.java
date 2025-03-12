@@ -2,9 +2,11 @@ package com.sb02.todoapp.controller;
 
 import com.sb02.todoapp.domain.Todo;
 import com.sb02.todoapp.service.TodoService;
+import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,8 +20,9 @@ public class TodoPageController {
     private final TodoService todoService;
     //
     @GetMapping("/todos")
-    public String getTodosPage() {
-
+    public String getTodosPage(Model model) {
+        List<Todo> todoList = todoService.findAll();
+        model.addAttribute("todoList", todoList);
         return "todos";  // templates/todos.html 파일을 렌더링
     }
 

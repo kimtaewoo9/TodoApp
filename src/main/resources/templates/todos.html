@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>TODO 앱</title>
+    <script>
+        // 페이지 로딩 시, TODO 목록을 AJAX로 불러오는 함수
+        function loadTodos() {
+            fetch('/api/todos')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('서버 응답 오류');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const todoList = document.getElementById('todoList');
+                    todoList.innerHTML = ''; // 기존 목록 초기화
+                    data.forEach(todo => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${todo.name}</strong> - ${todo.description}`;
+                        todoList.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading todos:', error);
+                    alert('TODO 목록을 불러오는데 실패했습니다.');
+                });
+        }
+
+        // form 제출 시 AJAX 호출로 TODO 항목 추가
+        function submitForm(event) {
+            event.preventDefault(); // 기본 form 제출 동작 방지
+
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+
+            fetch('/api/todos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: name, description: description })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('서버 응답 오류');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 새로운 항목 추가 후 전체 목록 갱신
+                    loadTodos();
+                    document.getElementById('todoForm').reset();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('TODO 항목 추가에 실패했습니다.');
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('todoForm').addEventListener('submit', submitForm);
+            loadTodos(); // 페이지 로딩 시 목록 불러오기
+        });
+    </script>
+</head>
+<body>
+<h1>TODO 항목 추가</h1>
+<form id="todoForm" th:action="@{/api/todos}" method="post">
+    <label for="name">항목 이름:</label>
+    <input type="text" id="name" name="name" required />
+    <br/>
+    <label for="description">항목 설명:</label>
+    <textarea id="description" name="description" required></textarea>
+    <br/>
+    <button type="submit">추가</button>
+</form>
+
+<h2>현재 TODO 목록</h2>
+<ul id="todoList">
+    <!-- AJAX로 불러온 TODO 항목들이 동적으로 추가됩니다. -->
+</ul>
+</body>
+</html>

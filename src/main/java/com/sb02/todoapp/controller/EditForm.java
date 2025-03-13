@@ -1,4 +1,10 @@
 package com.sb02.todoapp.controller;
 
-public class editForm {
+import lombok.Data;
+
+@Data
+public class EditForm {
+
+    private String name;
+    private String description;
 }

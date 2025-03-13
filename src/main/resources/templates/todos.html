@@ -18,7 +18,11 @@
                     todoList.innerHTML = ''; // 기존 목록 초기화
                     data.todos.forEach(todo => {
                         const li = document.createElement('li');
-                        li.innerHTML = `<strong>${todo.name}</strong> - ${todo.description}`;
+                        li.innerHTML = `
+                            <strong>${todo.name}</strong> - ${todo.description}
+                            <button onclick="editTodo(${todo.id}, '${todo.name}', '${todo.description}')">수정</button>
+                            <button onclick="deleteTodo(${todo.id})">삭제</button>
+                        `;
                         todoList.appendChild(li);
                     });
                 })
@@ -48,8 +52,7 @@
                     }
                     return response.json();
                 })
-                .then(data => {
-                    // 새로운 항목 추가 후 전체 목록 갱신
+                .then(() => {
                     loadTodos();
                     document.getElementById('todoForm').reset();
                 })
@@ -57,6 +60,52 @@
                     console.error('Error:', error);
                     alert('TODO 항목 추가에 실패했습니다.');
                 });
+        }
+
+        // TODO 항목 수정
+        function editTodo(id, currentName, currentDescription) {
+            const newName = prompt('새로운 이름을 입력하세요:', currentName);
+            const newDescription = prompt('새로운 설명을 입력하세요:', currentDescription);
+            if (newName !== null && newDescription !== null) {
+                fetch(`/api/todos/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: newName, description: newDescription })
+                    // 클라이언트에서 { name : newName, description: newDescription } 을 보내야함 .
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('서버 응답 오류');
+                        }
+                        return response.json();
+                    })
+                    .then(() => loadTodos())
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('TODO 항목 수정에 실패했습니다.');
+                    });
+            }
+        }
+
+        // TODO 항목 삭제
+        function deleteTodo(id) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                fetch(`/api/todos/${id}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('서버 응답 오류');
+                        }
+                        loadTodos();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('TODO 항목 삭제에 실패했습니다.');
+                    });
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {

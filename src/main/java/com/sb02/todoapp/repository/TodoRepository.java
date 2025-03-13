@@ -19,11 +19,22 @@ public class TodoRepository {
         store.put(sequence, todo);
     }
 
+    public void update(Long id, String name, String description){
+        Todo todo = findById(id);
+        todo.setName(name);
+        todo.setDescription(description);
+        store.put(id, todo);
+    }
+
     public Todo findById(Long id){
         return store.get(id);
     }
 
     public List<Todo> findAll(){
         return new ArrayList<>(store.values());
+    }
+
+    public void delete(Long id) {
+        store.remove(id);
     }
 }

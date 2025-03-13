@@ -19,6 +19,20 @@ public class TodoService {
         return todo.getId();
     }
 
+    public void update(Long id, String name, String description){
+        todoRepository.update(id,name,description);
+    }
+
+    public void delete(Long id){
+        todoRepository.delete(id);
+    }
+
+    public Todo findById(Long id){
+        Todo todo = todoRepository.findById(id);
+
+        return todo;
+    }
+
     public List<Todo> findAll(){
         return todoRepository.findAll();
     }

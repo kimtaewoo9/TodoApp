@@ -2,10 +2,12 @@ package com.sb02.todoapp.controller;
 
 import com.sb02.todoapp.domain.Todo;
 import com.sb02.todoapp.service.TodoService;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +32,7 @@ public class TodoRestController {
     }
 
     @PostMapping
-    public CreateTodoResponse saveTodo(@RequestBody TodoForm form, BindingResult bindingResult){
+    public CreateTodoResponse saveTodo(@Validated @RequestBody TodoForm form, BindingResult bindingResult){
 
         Todo todo  = new Todo();
         todo.setName(form.getName());
@@ -42,7 +44,7 @@ public class TodoRestController {
     }
 
     @PutMapping("/{id}")
-    public UpdateTodoResponse updateTodo(@PathVariable("id") Long id, @RequestBody EditForm form){
+    public UpdateTodoResponse updateTodo(@PathVariable("id") Long id, @Validated @RequestBody EditForm form){
 
         todoService.update(id, form.getName(), form.getDescription());
         Todo todo = todoService.findById(id);
@@ -66,8 +68,12 @@ public class TodoRestController {
 
     @Data
     static class UpdateTodoResponse{
+
+
         private Long id;
+        @NotEmpty
         private String newName;
+        @NotEmpty
         private String newDescription;
 
         public UpdateTodoResponse(Long id, String newName, String newDescription){
@@ -79,7 +85,10 @@ public class TodoRestController {
 
     @Data
     static class CreateTodoResponse{
+
+        @NotEmpty(message = "항목 이름을 입력하세요.")
         private String name;
+        @NotEmpty(message = "항목 내용을 입력하세요.")
         private String description;
 
         public CreateTodoResponse(String name, String description){

@@ -2,6 +2,7 @@ package com.sb02.todoapp.repository;
 
 import com.sb02.todoapp.domain.Todo;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,9 @@ public class TodoRepository {
     }
 
     public List<Todo> findAll(){
-        return new ArrayList<>(store.values());
+        return store.values().stream()
+                .sorted(Comparator.comparing(Todo::getCreatedAt).reversed())
+                .toList();
     }
 
     public void delete(Long id) {

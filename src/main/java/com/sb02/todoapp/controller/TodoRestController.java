@@ -1,6 +1,12 @@
 package com.sb02.todoapp.controller;
 
 import com.sb02.todoapp.domain.Todo;
+import com.sb02.todoapp.dto.CreateTodoRequest;
+import com.sb02.todoapp.dto.CreateTodoResponse;
+import com.sb02.todoapp.dto.CreateTodosResponse;
+import com.sb02.todoapp.dto.DeleteTodoResponse;
+import com.sb02.todoapp.dto.UpdateTodoRequest;
+import com.sb02.todoapp.dto.UpdateTodoResponse;
 import com.sb02.todoapp.exception.TodoNotFound;
 import com.sb02.todoapp.service.TodoService;
 import jakarta.validation.constraints.NotEmpty;
@@ -8,7 +14,7 @@ import java.net.URI;
 import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,25 +35,35 @@ public class TodoRestController {
     private final TodoService todoService;
 
     @GetMapping
-    public CreateTodosResponse getTodosPage(){
+    public ResponseEntity<CreateTodosResponse> getTodosPage(){
         List<Todo> todos = todoService.findAll();
+        CreateTodosResponse response = new CreateTodosResponse(
+            todoService.findAll().stream()
+                .map(TodoRestController::convertTodoItemDto)
+                .toList()
+        );
 
-        return new CreateTodosResponse(todos);
+        return ResponseEntity.ok(response);
+    }
+
+    // 보여줄 부분만 CreateTodoResponse 로 바꿈 .
+    private static CreateTodoResponse convertTodoItemDto(Todo todo) {
+        return new CreateTodoResponse(todo.getName(), todo.getDescription());
     }
 
     @GetMapping("/{id}")
-    public Todo retrieveTodo(@PathVariable Long id){
+    public ResponseEntity<Todo> retrieveTodo(@PathVariable Long id){
 
         Todo todo = todoService.findById(id);
         if(todo == null){
             throw new TodoNotFound("todo not found");
         }
 
-        return todo;
+        return ResponseEntity.ok(todo);
     }
 
     @PostMapping
-    public CreateTodoResponse saveTodo(@Validated @RequestBody TodoForm form, BindingResult bindingResult){
+    public ResponseEntity<CreateTodoResponse> saveTodo(@Validated @RequestBody TodoForm form, BindingResult bindingResult){
 
         Todo todo  = new Todo();
         todo.setName(form.getName());
@@ -62,19 +78,25 @@ public class TodoRestController {
 
         // 200번대 상태코드 -> 클라이언트 요청을 성공한 경우 .
         // 상태 코드를 201 create로 바꾸고 생성 위치(location) 반환 .
-        return new CreateTodoResponse(todo.getName(), todo.getDescription());
+        return ResponseEntity.created(location).build(); // build -> body없이 응답 생성함 .
+        // location -> 새로 생성된 리소스의 위치를 전달함 .
     }
 
     @PutMapping("/{id}")
-    public UpdateTodoResponse updateTodo(@PathVariable("id") Long id, @Validated @RequestBody EditForm form){
+    public ResponseEntity<UpdateTodoResponse> updateTodo(@PathVariable("id") Long id, @RequestBody UpdateTodoRequest request){
 
-        todoService.update(id, form.getName(), form.getDescription());
+        todoService.update(id, request.getName(), request.getDescription());
         Todo todo = todoService.findById(id);
-        return new UpdateTodoResponse(todo.getId(),todo.getName(), todo.getDescription());
+        if(todo == null){
+            throw new TodoNotFound("todo not found");
+        }
+        UpdateTodoResponse response = new UpdateTodoResponse(todo.getName(), todo.getDescription());
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public DeleteTodoResponse deleteTodo(@PathVariable("id") Long id){
+    public ResponseEntity<DeleteTodoResponse> deleteTodo(@PathVariable("id") Long id){
 
         Todo todo = todoService.findById(id);
         if(todo == null){
@@ -84,55 +106,6 @@ public class TodoRestController {
         todoService.delete(id);
 
         // 204 no content 에러 전송 .. -> 삭제 됐으니까 no content
-        return new DeleteTodoResponse(id);
-    }
-
-    @Data
-    static class DeleteTodoResponse{
-
-        private Long id;
-
-        public DeleteTodoResponse(Long id){
-            this.id = id;
-        }
-    }
-
-    @Data
-    static class UpdateTodoResponse{
-
-        private Long id;
-        @NotEmpty
-        private String newName;
-        @NotEmpty
-        private String newDescription;
-
-        public UpdateTodoResponse(Long id, String newName, String newDescription){
-            this. id = id;
-            this.newName = newName;
-            this.newDescription = newDescription;
-        }
-    }
-
-    @Data
-    static class CreateTodoResponse{
-
-        @NotEmpty(message = "항목 이름을 입력하세요.")
-        private String name;
-        @NotEmpty(message = "항목 내용을 입력하세요.")
-        private String description;
-
-        public CreateTodoResponse(String name, String description){
-            this.name = name;
-            this.description = description;
-        }
-    }
-
-    @Data
-    static class CreateTodosResponse{
-        private List<Todo> todos;
-
-        public CreateTodosResponse(List<Todo> todos){
-            this.todos = todos;
-        }
+        return ResponseEntity.noContent().build();
     }
 }

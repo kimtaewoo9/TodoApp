@@ -13,7 +13,7 @@ public class TodoRepository {
 
     private final Map<Long, Todo> store = new HashMap<>();
 
-    private Long sequence = 0L;
+    private static Long sequence = 0L;
 
     public void save(Todo todo){
         todo.setId(++sequence);

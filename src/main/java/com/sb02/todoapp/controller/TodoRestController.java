@@ -1,6 +1,7 @@
 package com.sb02.todoapp.controller;
 
 import com.sb02.todoapp.domain.Todo;
+import com.sb02.todoapp.exception.TodoNotFound;
 import com.sb02.todoapp.service.TodoService;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
@@ -29,6 +30,17 @@ public class TodoRestController {
         List<Todo> todos = todoService.findAll();
 
         return new CreateTodosResponse(todos);
+    }
+
+    @GetMapping("/{id}")
+    public Todo retrieveTodo(@PathVariable Long id){
+
+        Todo todo = todoService.findById(id);
+        if(todo == null){
+            throw new TodoNotFound("todo not found");
+        }
+
+        return todo;
     }
 
     @PostMapping
@@ -68,7 +80,6 @@ public class TodoRestController {
 
     @Data
     static class UpdateTodoResponse{
-
 
         private Long id;
         @NotEmpty

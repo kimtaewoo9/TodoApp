@@ -2,133 +2,342 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TODO 앱</title>
-    <script>
-        // 페이지 로딩 시, TODO 목록을 AJAX로 불러오는 함수
-        function loadTodos() {
-            fetch('/api/todos')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('서버 응답 오류');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const todoList = document.getElementById('todoList');
-                    todoList.innerHTML = ''; // 기존 목록 초기화
-                    data.todos.forEach(todo => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `
-                            <strong>${todo.name}</strong> - ${todo.description}
-                            <button onclick="editTodo(${todo.id}, '${todo.name}', '${todo.description}')">수정</button>
-                            <button onclick="deleteTodo(${todo.id})">삭제</button>
-                        `;
-                        todoList.appendChild(li);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading todos:', error);
-                    alert('TODO 목록을 불러오는데 실패했습니다.');
-                });
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #6366F1;
+            --primary-hover: #4F46E5;
+            --light-bg: #F3F4F6;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        // form 제출 시 AJAX 호출로 TODO 항목 추가
-        function submitForm(event) {
-            event.preventDefault(); // 기본 form 제출 동작 방지
-
-            const name = document.getElementById('name').value;
-            const description = document.getElementById('description').value;
-
-            fetch('/api/todos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name: name, description: description })
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('서버 응답 오류');
-                    }
-                    return response.json();
-                })
-                .then(() => {
-                    loadTodos();
-                    document.getElementById('todoForm').reset();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('TODO 항목 추가에 실패했습니다.');
-                });
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 2rem;
         }
 
-        // TODO 항목 수정
-        function editTodo(id, currentName, currentDescription) {
-            const newName = prompt('새로운 이름을 입력하세요:', currentName);
-            const newDescription = prompt('새로운 설명을 입력하세요:', currentDescription);
-            if (newName !== null && newDescription !== null) {
-                fetch(`/api/todos/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ name: newName, description: newDescription })
-                    // 클라이언트에서 { name : newName, description: newDescription } 을 보내야함 .
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('서버 응답 오류');
-                        }
-                        return response.json();
-                    })
-                    .then(() => loadTodos())
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('TODO 항목 수정에 실패했습니다.');
-                    });
-            }
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #8B5CF6);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+            border-radius: 0 0 15px 15px;
+            box-shadow: var(--card-shadow);
         }
 
-        // TODO 항목 삭제
-        function deleteTodo(id) {
-            if (confirm('정말 삭제하시겠습니까?')) {
-                fetch(`/api/todos/${id}`, {
-                    method: 'DELETE'
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('서버 응답 오류');
-                        }
-                        loadTodos();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('TODO 항목 삭제에 실패했습니다.');
-                    });
-            }
+        .header h1 {
+            margin: 0;
+            font-weight: 700;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('todoForm').addEventListener('submit', submitForm);
-            loadTodos(); // 페이지 로딩 시 목록 불러오기
-        });
-    </script>
+        .todo-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .todo-form label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #4B5563;
+        }
+
+        .add-btn {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .add-btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .todo-list-container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+        }
+
+        .todo-list-container h2 {
+            color: #374151;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .todo-item {
+            background-color: #F9FAFB;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .todo-item:hover {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .todo-content strong {
+            color: #111827;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .todo-content p {
+            color: #6B7280;
+            margin: 0;
+        }
+
+        .todo-actions button {
+            border: none;
+            background: none;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .edit-btn {
+            color: #3B82F6;
+            margin-right: 0.5rem;
+        }
+
+        .edit-btn:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .delete-btn {
+            color: #EF4444;
+        }
+
+        .delete-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .empty-list {
+            text-align: center;
+            padding: 2rem;
+            color: #9CA3AF;
+            font-style: italic;
+        }
+
+        .form-control:focus, .form-control:active {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+        }
+    </style>
 </head>
 <body>
-<h1>TODO 항목 추가</h1>
-<form id="todoForm" th:action="@{/api/todos}" method="post">
-    <label for="name">항목 이름:</label>
-    <input type="text" id="name" name="name" required />
-    <br/>
-    <label for="description">항목 설명:</label>
-    <textarea id="description" name="description" required></textarea>
-    <br/>
-    <button type="submit">추가</button>
-</form>
+<div class="header">
+    <div class="container">
+        <h1><i class="fas fa-check-circle me-2"></i>TODO 앱</h1>
+    </div>
+</div>
 
-<h2>현재 TODO 목록</h2>
-<ul id="todoList">
-    <!-- AJAX로 불러온 TODO 항목들이 동적으로 추가됩니다. -->
-</ul>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="todo-card">
+                <form id="todoForm" class="todo-form" th:action="@{/api/todos}" method="post">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">항목 이름</label>
+                        <input type="text" class="form-control" id="name" name="name" required
+                               placeholder="할 일을 입력하세요">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">항목 설명</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required
+                                  placeholder="자세한 내용을 입력하세요"></textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="add-btn">
+                            <i class="fas fa-plus me-2"></i>추가하기
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="todo-list-container">
+                <h2><i class="fas fa-list-ul me-2"></i>현재 TODO 목록</h2>
+                <div id="empty-list-message" class="empty-list">
+                    할 일 목록이 비어있습니다. 새로운 할 일을 추가해 보세요!
+                </div>
+                <div id="todoList">
+                    <!-- AJAX로 불러온 TODO 항목들이 동적으로 추가됩니다. -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 페이지 로딩 시, TODO 목록을 AJAX로 불러오는 함수
+    function loadTodos() {
+        fetch('/api/todos')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('서버 응답 오류');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const todoList = document.getElementById('todoList');
+            const emptyMessage = document.getElementById('empty-list-message');
+            todoList.innerHTML = ''; // 기존 목록 초기화
+
+            if (data.todos && data.todos.length > 0) {
+                emptyMessage.style.display = 'none';
+
+                data.todos.forEach(todo => {
+                    const todoItem = document.createElement('div');
+                    todoItem.className = 'todo-item';
+                    todoItem.innerHTML = `
+                                <div class="todo-content">
+                                    <strong>${escapeHtml(todo.name)}</strong>
+                                    <p>${escapeHtml(todo.description)}</p>
+                                </div>
+                                <div class="todo-actions">
+                                    <button class="edit-btn" onclick="editTodo(${todo.id}, '${escapeHtml(todo.name)}', '${escapeHtml(todo.description)}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="delete-btn" onclick="deleteTodo(${todo.id})">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            `;
+                    todoList.appendChild(todoItem);
+                });
+            } else {
+                emptyMessage.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading todos:', error);
+            const todoList = document.getElementById('todoList');
+            todoList.innerHTML = '<div class="alert alert-danger">TODO 목록을 불러오는데 실패했습니다.</div>';
+        });
+    }
+
+    // HTML 특수문자 이스케이프 함수
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // form 제출 시 AJAX 호출로 TODO 항목 추가
+    function submitForm(event) {
+        event.preventDefault(); // 기본 form 제출 동작 방지
+
+        const name = document.getElementById('name').value.trim();
+        const description = document.getElementById('description').value.trim();
+
+        if (!name || !description) {
+            alert('이름과 설명을 모두 입력해주세요.');
+            return;
+        }
+
+        fetch('/api/todos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: name, description: description })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('서버 응답 오류');
+            }
+            return response.json();
+        })
+        .then(() => {
+            loadTodos();
+            document.getElementById('todoForm').reset();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('TODO 항목 추가에 실패했습니다.');
+        });
+    }
+
+    // TODO 항목 수정
+    function editTodo(id, currentName, currentDescription) {
+        // Bootstrap 모달을 사용하는 대신 간단한 프롬프트 사용
+        const newName = prompt('새로운 이름을 입력하세요:', currentName);
+        if (newName === null) return; // 취소 시 함수 종료
+
+        const newDescription = prompt('새로운 설명을 입력하세요:', currentDescription);
+        if (newDescription === null) return; // 취소 시 함수 종료
+
+        if (newName.trim() === '' || newDescription.trim() === '') {
+            alert('이름과 설명을 모두 입력해주세요.');
+            return;
+        }
+
+        fetch(`/api/todos/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: newName, description: newDescription })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('서버 응답 오류');
+            }
+            return response.json();
+        })
+        .then(() => loadTodos())
+        .catch(error => {
+            console.error('Error:', error);
+            alert('TODO 항목 수정에 실패했습니다.');
+        });
+    }
+
+    // TODO 항목 삭제
+    function deleteTodo(id) {
+        if (confirm('정말 삭제하시겠습니까?')) {
+            fetch(`/api/todos/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('서버 응답 오류');
+                }
+                loadTodos();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('TODO 항목 삭제에 실패했습니다.');
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('todoForm').addEventListener('submit', submitForm);
+        loadTodos(); // 페이지 로딩 시 목록 불러오기
+    });
+</script>
 </body>
 </html>
